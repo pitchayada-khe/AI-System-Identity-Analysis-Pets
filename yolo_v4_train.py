@@ -19,8 +19,7 @@ result = client.run_workflow(
     use_cache=True
 )
 # print(result)
-
-print(f"Name : {image_name}")
+# print(f"Name : {image_name}")
 
 if isinstance(result, list) and len(result) > 0:
     inner = result[0].get('predictions', {})
@@ -30,17 +29,17 @@ if isinstance(result, list) and len(result) > 0:
         print("No objects were detected in the image!")
     else:
         for data in pred:
-            print(f"Class : {data['class']}\nConfidence : {data['confidence']:.2f}\nBox : ({data['x']}, {data['y']}, {data['width']}x{data['height']})")
+            print(f"Detected : {data['class']} {data['confidence']:.2f} at ({data['x']}, {data['y']}, {data['width']}, {data['height']})")
             
-            output_image_url = result[0].get('output_image')
+            # output_image_url = result[0].get('output_image')
     
-            if output_image_url:
-                print("Visualization image URL:", output_image_url)
-                response = requests.get(output_image_url)
-                img = Image.open(BytesIO(response.content))
-                img.show()
-            else:
-                print("No visualization image found!")
+            # if output_image_url:
+            #     print("Visualization image URL:", output_image_url)
+            #     response = requests.get(output_image_url)
+            #     img = Image.open(BytesIO(response.content))
+            #     img.show()
+            # else:
+            #     print("No visualization image found!")
 
 else:
     print("No predictions found!")
