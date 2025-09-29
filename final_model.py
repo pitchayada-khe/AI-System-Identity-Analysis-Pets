@@ -50,7 +50,7 @@ def classification(image_path, save_image=True, save_dir="results/", resize_dim=
     }
 
     # DETECT NOSE FROM FACE REGION #
-    results_nose = nose_model(face_region)
+    results_nose = nose_model(face)
     best_nose = None
     best_nose_conf = -1
 
@@ -66,7 +66,7 @@ def classification(image_path, save_image=True, save_dir="results/", resize_dim=
             if nose_conf > best_nose_conf:
                 best_nose_conf = nose_conf
                 nx1, ny1, nx2, ny2 = map(int, nose_box.xyxy[0])
-                nose = face_region[ny1:ny2, nx1:nx2]
+                nose = face[ny1:ny2, nx1:nx2]
                 nose_img = cv2.resize(nose, resize_dim, interpolation=cv2.INTER_LINEAR)
 
                 best_nose = {
