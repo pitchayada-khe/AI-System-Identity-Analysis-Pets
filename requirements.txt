@@ -1,0 +1,7 @@
+PyQt5
+ultralytics
+opencv-python-headless
+torch
+torchvision
+huggingface-hub
+numpy
