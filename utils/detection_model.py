@@ -52,8 +52,8 @@ def detection(frame, resize_dim=(224,224)):
     
     # Draw on 'image' for GUI
     animal_color = CLASS_COLORS.get(best_animal, DEFAULT_COLOR) 
-    cv2.rectangle(image, (x1, y1), (x2, y2), animal_color, 3)
-    cv2.putText(image, best_animal.upper(), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, animal_color, 3)
+    cv2.rectangle(image, (x1, y1), (x2, y2), animal_color, 2)
+    cv2.putText(image, best_animal.upper(), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, animal_color, 2)
     
     # Crop from clean frame
     face_clean = clean_frame[y1:y2, x1:x2]
@@ -96,7 +96,7 @@ def detection(frame, resize_dim=(224,224)):
                 global_nx1, global_ny1 = x1 + nx1, y1 + ny1
                 global_nx2, global_ny2 = x1 + nx2, y1 + ny2
                 nose_color = CLASS_COLORS.get("nose", DEFAULT_COLOR)
-                cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), nose_color, 3)
+                cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), nose_color, 2)
                 
                 # Crop clean nose
                 nose_clean = face_clean[ny1:ny2, nx1:nx2]

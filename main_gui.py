@@ -5,8 +5,8 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel,
     QHBoxLayout, QVBoxLayout, QFrame
 )
-from PyQt5.QtGui import QImage, QPixmap, QIcon  
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QImage, QPixmap, QIcon, QPainter, QPen, QColor, QBrush
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QRectF
 from PyQt5.QtWidgets import QScrollArea
 from datetime import datetime
 
@@ -109,6 +109,47 @@ class DetectionCard(QFrame):
 
         self.setLayout(layout)
 
+# ---- DECORATE ---- #
+class AntialiasedLabel(QLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่าเริ่มต้น
+        self._border_color = QColor("#ffccd5") 
+        self._border_width = 2
+        self._corner_radius = 15
+        self._bg_color = Qt.transparent
+
+    def setBorder(self, color_str, width, radius):
+        self._border_color = QColor(color_str)
+        self._border_width = width
+        self._corner_radius = radius
+        self.update() 
+
+    def setBackgroundColor(self, color_str):
+        self._bg_color = QColor(color_str)
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self._border_color == QColor("transparent") or self._border_width == 0:
+            return
+        
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        pen = QPen(self._border_color)
+        pen.setWidth(self._border_width)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+
+        painter.setBrush(QBrush(self._bg_color))
+
+        rect = QRectF(self.rect())
+        offset = self._border_width / 2.0
+        rect.adjust(offset, offset, -offset, -offset)
+
+        painter.drawRoundedRect(rect, self._corner_radius, self._corner_radius)
+
 
 # ---- MAIN GUI ---- #
 class MainWindow(QWidget):
@@ -152,7 +193,7 @@ class MainWindow(QWidget):
             }
         """)
         
-        title_label = QLabel("🐈‍⬛ Result 🐈‍⬛")
+        title_label = QLabel("Result 🐈‍⬛")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("""
             font-size: 22px; 
@@ -163,21 +204,20 @@ class MainWindow(QWidget):
             border: none;
         """)
 
-        self.face_label = QLabel()
+        self.face_label = AntialiasedLabel()
         self.face_label.setAlignment(Qt.AlignCenter)
-        self.face_label.setFixedSize(270, 270)
-        self.face_label.setStyleSheet("""
-            QLabel {
-                border: 2px solid #ffccd5;
-                border-radius: 10px;
-                background-color: #fefdfa; 
-            }
-        """)
+        self.face_label.setFixedWidth(270)
+        self.face_label.setFixedHeight(270)
+        self.face_label.setStyleSheet("border: none; background: transparent;")
+        self.face_label.setBorder("#ffccd5", 2, 15)
+        self.face_label.hide()
 
-        self.info_label = QLabel("")
+        self.info_label = AntialiasedLabel()
         self.info_label.setFixedWidth(270)
         self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("border: none; background: transparent;")
+        self.info_label.setBorder("transparent", 0, 15)
+        self.info_label.setText("")
+        self.info_label.hide()
 
         self.status_label = QLabel("WAITING...") 
         self.status_label.setFixedSize(140, 26)
@@ -231,7 +271,7 @@ class MainWindow(QWidget):
         history_layout.setContentsMargins(15, 15, 15, 15)
         history_layout.setSpacing(10)
 
-        self.log_title = QLabel("🐾 Detection History 🐾")
+        self.log_title = QLabel("Detection History 🐾")
         self.log_title.setStyleSheet("""
             font-size: 16px; 
             font-weight: bold; 
@@ -305,16 +345,50 @@ class MainWindow(QWidget):
     # Update Right Panel (Only When Detect)
     def update_detection(self, data):
         self.last_detection = data
+        self.face_label.show()
+        self.info_label.show()
 
+        # Image part
         face_img = data["image"]
         face_rgb = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
         h, w, ch = face_rgb.shape
         bytes_per_line = ch * w
         qt_image = QImage(face_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_image)
-        scaled_pixmap = pixmap.scaled(270, 270, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.face_label.setPixmap(scaled_pixmap)
 
+        display_size = 266
+        scaled_pixmap = pixmap.scaled(display_size, display_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        
+        final_pixmap = QPixmap(270, 270)
+        final_pixmap.fill(Qt.transparent)
+
+        painter = QPainter(final_pixmap)
+        painter.setRenderHint(QPainter.Antialiasing) 
+        rect = QRectF(0, 0, 270, 270)
+        border_radius = 15
+
+        x_off = (270 - scaled_pixmap.width()) / 2
+        y_off = (270 - scaled_pixmap.height()) / 2
+
+        from PyQt5.QtGui import QPainterPath
+        path = QPainterPath()
+        path.addRoundedRect(rect, border_radius, border_radius)
+        painter.setClipPath(path)
+        painter.drawPixmap(int(x_off), int(y_off), scaled_pixmap)
+        
+        painter.setClipping(False)
+        pen = QPen(QColor("#ffccd5")) 
+        pen.setWidth(2) 
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(1,1,-1,-1), border_radius, border_radius) 
+        painter.end()
+
+        self.face_label.setPixmap(final_pixmap)
+
+        # Info part
+        self.info_label.setBorder("#ffccd5", 2, 15)
+        
         animal_class = data["class"].upper()
         animal_conf = f"{data['confidence']:.2f}"
         nose_conf = f"{data['nose_data']['confidence']:.2f}"
@@ -334,41 +408,31 @@ class MainWindow(QWidget):
             face_d = "N/A"
             nose_d = "N/A"
 
-        self.info_label.setStyleSheet("""
-            QLabel {
-                background-color: transparent;
-                border: 2px solid #ffccd5; 
-                border-radius: 15px;     
-                padding: 0px;
-            }
-        """)
-
         info_html = f"""
         <table width='100%' cellspacing='0' cellpadding='6' 
                style='font-family: Segoe UI; border: none; text-align: center;'>
             <tr style='background-color: #fff5f6;'>
-                <td width='50%' style='color: #9b8ea9; text-align: center; font-weight: bold; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Class</td>
+                <td width='50%' style='color: #4a4a4a; text-align: center; font-weight: bold; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Class</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_class}</td>
             </tr>
             <tr>
-                <td style='color: #9b8ea9; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Animal Conf</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Animal Conf</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_conf}</td>
             </tr>
             <tr style='background-color: #fff5f6;'>
-                <td style='color: #9b8ea9; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Nose Conf</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Nose Conf</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{nose_conf}</td>
             </tr>
             <tr>
-                <td style='color: #9b8ea9; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Face Dist</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Face Dist</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{face_d}</td>
             </tr>
             <tr style='background-color: #fff5f6;'>
-                <td style='color: #9b8ea9; font-weight: bold; text-align: center; border-right: 1px solid #ffccd5;'>Nose Dist</td>
-                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{nose_d}</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-right: 1px solid #ffccd5;'>Nose Dist</td>
+                <td width='50%' style='color: #333; text-align: center;'>{nose_d}</td>
             </tr>
         </table>
         """
-
         self.info_label.setText(info_html)
 
         status_text = "KNOWN" if status else "UNKNOWN"
