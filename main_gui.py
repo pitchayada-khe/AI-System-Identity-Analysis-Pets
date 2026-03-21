@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel,
     QHBoxLayout, QVBoxLayout, QFrame
 )
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt5.QtGui import QImage, QPixmap, QIcon
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import QScrollArea
 from datetime import datetime
@@ -16,8 +16,8 @@ from utils.identification_model import identification
 
 # ---- CAMERA WORKER THREAD ---- #
 class CameraWorker(QThread):
-    frame_signal = pyqtSignal(object)       # send frame to left side
-    detection_signal = pyqtSignal(object)   # send detect history to right side
+    frame_signal = pyqtSignal(object)       
+    detection_signal = pyqtSignal(object)   
 
     def __init__(self):
         super().__init__()
@@ -34,14 +34,12 @@ class CameraWorker(QThread):
             # ---- DETECTION ---- #
             result = detection(frame)
 
-            # send frame to show
             if result is not None:
                 self.detection_signal.emit(result)
                 self.frame_signal.emit(result["annotated_frame"])
             else:
                 self.frame_signal.emit(frame)
 
-            # delay detect (10 FPS)
             time.sleep(0.1)
 
         cap.release()
@@ -51,7 +49,7 @@ class CameraWorker(QThread):
         self.quit()
         self.wait()
 
-# ---- CARD WIDGET LOGS ---- #
+# ---- CARD WIDGET LOGS (Pastel Theme) ---- #
 class DetectionCard(QFrame):
     def __init__(self, image, label, timestamp):
         super().__init__()
@@ -62,10 +60,10 @@ class DetectionCard(QFrame):
             #LogCard {
                 background-color: white;
                 border-radius: 12px; 
-                border: 1px solid #ddd; 
+                border: 2px solid #f0e4e4; 
             }
             #LogCard:hover {
-                border: 2px solid #c1e1c1; 
+                border: 2px solid #b5e5c5; 
             }
         """)
 
@@ -82,14 +80,14 @@ class DetectionCard(QFrame):
         scaled_pixmap = pixmap.scaled(120, 95, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         img_label.setPixmap(scaled_pixmap)
         img_label.setAlignment(Qt.AlignCenter)
-        img_label.setStyleSheet("border: none; background: transparent; border-radius: 12px;")
+        img_label.setStyleSheet("border: none; background: transparent;")
 
         self.class_label = QLabel(f"Class : {label.upper()}")
         self.class_label.setAlignment(Qt.AlignCenter)
         self.class_label.setStyleSheet("""
             font-size: 11px;
             font-weight: bold;
-            color: #333;
+            color: #5d5368;
             border: none;
             background: transparent;
         """)
@@ -98,7 +96,7 @@ class DetectionCard(QFrame):
         self.time_label.setAlignment(Qt.AlignCenter)
         self.time_label.setStyleSheet("""
             font-size: 10px;
-            color: #666;
+            color: #8c8594;
             border: none;
             background: transparent;
         """)
@@ -115,6 +113,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Animal Detection System")
+        self.setWindowIcon(QIcon("paw.png"))
         self.setFixedSize(1045, 820)
 
         self.last_detection = None
@@ -126,28 +125,28 @@ class MainWindow(QWidget):
             QFrame {
                 background-color: white;
                 border-radius: 15px;
-                border: 1px solid #ddd;
+                border: 2px solid #f0e4e4; 
             }
         """)
 
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setFixedSize(640, 480)
-        self.camera_label.setStyleSheet("border: none; border-radius: 15px;")
+        self.camera_label.setStyleSheet("border: none;")
 
         camera_layout = QVBoxLayout()
         camera_layout.setContentsMargins(10, 10, 10, 10)
         camera_layout.addWidget(self.camera_label, alignment=Qt.AlignCenter)
         self.camera_frame.setLayout(camera_layout)
 
-        # ---- RIGHT: Cropped Face ---- #
+        # ---- RIGHT: Cropped Face & Result ---- #
         self.result_card = QFrame()
         self.result_card.setFixedSize(350, 520)
         self.result_card.setStyleSheet("""
             QFrame {
                 background-color: white;
                 border-radius: 15px;
-                border: 1px solid #ddd;
+                border: 2px solid #f0e4e4; 
             }
         """)
 
@@ -156,7 +155,7 @@ class MainWindow(QWidget):
         title_label.setStyleSheet("""
             font-size: 20px; 
             font-weight: bold; 
-            color: #333; 
+            color: #9b8ea9; 
             margin-top: 5px;
             background-color: transparent;
             border: none;
@@ -167,9 +166,9 @@ class MainWindow(QWidget):
         self.face_label.setFixedSize(300, 300)
         self.face_label.setStyleSheet("""
             QLabel {
-                border: 2px solid #e1e4e8;
-                border-radius: 15px;
-                background-color: #f8f9fb; 
+                border: 2px solid #f0e4e4;
+                border-radius: 10px;
+                background-color: #fdfbf7; 
             }
         """)
 
@@ -178,7 +177,7 @@ class MainWindow(QWidget):
         self.info_label.setStyleSheet("""
             QLabel {
                 font-size: 14px; 
-                color: #555; 
+                color: #5d5368; 
                 line-height: 1.5;
                 background-color: transparent;
                 border: none;
@@ -213,7 +212,7 @@ class MainWindow(QWidget):
             QFrame {
                 background-color: white;
                 border-radius: 15px;
-                border: 1px solid #ddd;
+                border: 2px solid #f0e4e4; 
             }
         """)
 
@@ -225,7 +224,7 @@ class MainWindow(QWidget):
         self.log_title.setStyleSheet("""
             font-size: 16px; 
             font-weight: bold; 
-            color: #333; 
+            color: #9b8ea9; 
             background-color: transparent;
             border: none;
         """)
@@ -268,11 +267,10 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
-        self.setLayout(main_layout)
         self.setStyleSheet("""
             QWidget {
                 font-family: 'Segoe UI', Arial, sans-serif;
-                background-color: #f4f6f9; 
+                background-color: #fdfbf7; 
             }
         """)
 
@@ -315,22 +313,22 @@ class MainWindow(QWidget):
         if type(result) is tuple and len(result) == 3:
             status, face_dist, nose_dist = result
             if nose_dist == -1.0:
-                dist_info = "<b style='color: #333;'>Distances :</b> First Animal"
+                dist_info = "<b style='color: #5d5368;'>Distances :</b> First Animal"
             else:
-                dist_info = f"<b style='color: #333;'>Face Dist :</b> {face_dist:.2f} | <b style='color: #333;'>Nose Dist :</b> {nose_dist:.2f}"
+                dist_info = f"<b style='color: #5d5368;'>Face Dist :</b> {face_dist:.2f} | <b style='color: #5d5368;'>Nose Dist :</b> {nose_dist:.2f}"
         else:
             status = result
-            dist_info = "<b style='color: #333;'>Distances :</b> N/A"
+            dist_info = "<b style='color: #5d5368;'>Distances :</b> N/A"
 
         status_text = "KNOWN" if status else "NEW"
-        status_color = "#86b686" if status else "#e6a8a8"
+        status_color = "#82b782" if status else "#d98282"
 
         info_html = (
-            f"<b style='color: #333;'>Class :</b> {animal_class.upper()}<br>"
-            f"<b style='color: #333;'>Animal Conf :</b> {animal_conf:.2f}<br>"
-            f"<b style='color: #333;'>Nose Conf :</b> {nose_conf:.2f}<br>"
+            f"<b style='color: #5d5368;'>Class :</b> {animal_class.upper()}<br>"
+            f"<b style='color: #5d5368;'>Animal Conf :</b> {animal_conf:.2f}<br>"
+            f"<b style='color: #5d5368;'>Nose Conf :</b> {nose_conf:.2f}<br>"
             f"{dist_info}<br><br>"
-            f"<b style='color: #333; font-size: 15px;'>Status :</b> <span style='color: {status_color}; font-size: 15px; font-weight: bold;'>{status_text}</span>"
+            f"<b style='color: #5d5368; font-size: 15px;'>Status :</b> <span style='color: {status_color}; font-size: 15px; font-weight: bold;'>{status_text}</span>"
         )
         self.info_label.setText(info_html)
 
@@ -338,7 +336,7 @@ class MainWindow(QWidget):
             timestamp = datetime.now().strftime("%H:%M:%S")
             self.add_log_card(face_img, animal_class, timestamp)
 
-    # Add Card Logs (Only When NEW Information)
+    # Add Card Logs
     def add_log_card(self, img, label, timestamp):
         card = DetectionCard(img, label, timestamp)
         self.log_layout.insertWidget(0, card)
@@ -357,12 +355,12 @@ if __name__ == "__main__":
     app.setStyleSheet("""
         QScrollBar:horizontal {
             border: none;
-            background: #f8f9fb;
+            background: #fdfbf7;
             height: 8px;
             margin: 0px;
         }
         QScrollBar::handle:horizontal {
-            background: #cccccc;
+            background: #e4d8d8; 
             min-width: 20px;
             border-radius: 4px;
         }
