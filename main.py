@@ -27,12 +27,16 @@ class MainWindow(QWidget):
         
         self.tabs.setStyleSheet("""
             QTabWidget::pane { 
-                border: 2px solid #ffccd5; 
-                border-radius: 15px;              
-                border-top-left-radius: 0px;      
-                background-color: #fff5f6; 
-                top: -2px;                       
-            } 
+                border: 2px solid #ffccd5;
+                border-radius: 15px;
+                border-top-left-radius: 0px;
+                background: transparent;
+                top: -2px;
+            }
+                                
+            QTabWidget > QWidget {
+                background: transparent;
+            }
             
             QTabBar::tab { 
                 background: #9b8ea9; 
@@ -58,7 +62,7 @@ class MainWindow(QWidget):
 
         # Camera Tab
         self.tab_camera = QWidget()
-        self.tab_camera.setStyleSheet("background-color: white; border: none;")
+        self.tab_camera.setStyleSheet("background: transparent; border: none;")
 
         self.camera_label = QLabel() 
         self.camera_label.setAlignment(Qt.AlignCenter)
@@ -69,13 +73,13 @@ class MainWindow(QWidget):
 
         # Image Tab
         self.tab_image = QWidget()
-        self.tab_image.setStyleSheet("background-color: white; border: none;")
+        self.tab_image.setStyleSheet("background: transparent; border: none;")
 
         self.image_label = QLabel() 
         self.image_label.setAlignment(Qt.AlignCenter)
 
         self.btn_upload_img = QPushButton("Choose Your Image")
-        self.btn_upload_img.setFixedSize(200, 45)
+        self.btn_upload_img.setFixedSize(160, 40)
         self.btn_upload_img.setCursor(Qt.PointingHandCursor)
         self.btn_upload_img.setStyleSheet("""
             QPushButton { 
@@ -83,7 +87,8 @@ class MainWindow(QWidget):
                 color: white;              
                 border-radius: 20px; 
                 font-weight: bold; 
-                font-size: 14px; 
+                font-size: 12px;
+                border: 2px solid #7a6b88;
             }
             QPushButton:hover { 
                 background-color: #7a6b88; 
@@ -98,13 +103,13 @@ class MainWindow(QWidget):
 
         # Video Tab
         self.tab_video = QWidget()
-        self.tab_video.setStyleSheet("background-color: white; border: none;")
+        self.tab_video.setStyleSheet("background: transparent; border: none;")
 
         self.video_label = QLabel() 
         self.video_label.setAlignment(Qt.AlignCenter)
 
         self.btn_upload_vid = QPushButton("Choose Your Video")
-        self.btn_upload_vid.setFixedSize(200, 45)
+        self.btn_upload_vid.setFixedSize(160, 40)
         self.btn_upload_vid.setCursor(Qt.PointingHandCursor)
         self.btn_upload_vid.setStyleSheet("""
             QPushButton { 
@@ -112,7 +117,8 @@ class MainWindow(QWidget):
                 color: white; 
                 border-radius: 20px; 
                 font-weight: bold; 
-                font-size: 14px; 
+                font-size: 12px;
+                border: 2px solid #7a6b88; 
             }
             QPushButton:hover { 
                 background-color: #7a6b88; 
