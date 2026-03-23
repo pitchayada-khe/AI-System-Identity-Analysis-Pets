@@ -1,7 +1,7 @@
 import cv2
-from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QLabel, QFrame, QVBoxLayout, QGraphicsDropShadowEffect
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QColor, QBrush
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtCore import Qt, QRectF, QTimer
 
 # ---- DECORATE ---- #
 class AntialiasedLabel(QLabel):
@@ -36,14 +36,25 @@ class AntialiasedLabel(QLabel):
 
 # ---- CARD WIDGET LOGS ---- #
 class DetectionCard(QFrame):
-    def __init__(self, image, label, timestamp):
+    def __init__(self, image, label, timestamp, is_new=True):
         super().__init__()
+
+        self.is_new = is_new
+
         self.setFixedSize(140, 160)
-        self.setObjectName("LogCard") 
+        self.setObjectName("LogCard")
+
         self.setStyleSheet("""
-            #LogCard { background-color: white; border-radius: 12px; border: 2px solid #ffccd5; }
-            #LogCard:hover { border: 2px solid #b3a1d9; }
+            #LogCard {
+                background-color: #FFF1F5;
+                border-radius: 12px;
+                border: 2px solid #FFD6E0;
+            }
+            #LogCard:hover {
+                border: 2px solid #FF6B9A;
+            }
         """)
+
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(6)
@@ -61,13 +72,58 @@ class DetectionCard(QFrame):
 
         class_lbl = QLabel(f"Class : {label.upper()}")
         class_lbl.setAlignment(Qt.AlignCenter)
-        class_lbl.setStyleSheet("font-size: 11px; font-weight: bold; color: #333; border: none;")
+        class_lbl.setStyleSheet("""
+            font-size: 11px;
+            font-weight: bold;
+            color: #2D2D2D;
+            border: none;
+        """)
 
         time_lbl = QLabel(f"Time : {timestamp}")
         time_lbl.setAlignment(Qt.AlignCenter)
-        time_lbl.setStyleSheet("font-size: 10px; color: #555; border: none;")
+        time_lbl.setStyleSheet("""
+            font-size: 10px;
+            color: #6B6B6B;
+            border: none;
+        """)
 
         layout.addWidget(img_label, alignment=Qt.AlignCenter)
         layout.addWidget(class_lbl)
         layout.addWidget(time_lbl)
         self.setLayout(layout)
+
+        if self.is_new:
+            self.highlight_new()
+
+    def highlight_new(self):
+        self.setStyleSheet("""
+            #LogCard {
+                background-color: #FFF1F5;
+                border-radius: 12px;
+                border: 2px solid #FF6B9A;
+            }
+            #LogCard:hover {
+                border: 2px solid #6C5CE7;
+            }
+        """)
+
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(20)
+        shadow.setColor(QColor("#FF6B9A"))
+        shadow.setOffset(0, 0)
+        self.setGraphicsEffect(shadow)
+
+        QTimer.singleShot(2000, self.remove_highlight)
+
+    def remove_highlight(self):
+        self.setGraphicsEffect(None)
+        self.setStyleSheet("""
+            #LogCard {
+                background-color: #FFF1F5;
+                border-radius: 12px;
+                border: 2px solid #FFD6E0;
+            }
+            #LogCard:hover {
+                border: 2px solid #FF6B9A;
+            }
+        """)

@@ -27,10 +27,10 @@ class MainWindow(QWidget):
         
         self.tabs.setStyleSheet("""
             QTabWidget::pane { 
-                border: 2px solid #ffccd5;
+                border: 2px solid #E5E0FF;
                 border-radius: 15px;
                 border-top-left-radius: 0px;
-                background: transparent;
+                background-color: #FAFAFF;
                 top: -2px;
             }
                                 
@@ -39,23 +39,27 @@ class MainWindow(QWidget):
             }
             
             QTabBar::tab { 
-                background: #9b8ea9; 
-                border: 2px solid #7a6b88; 
-                border-bottom: 2px solid #ffccd5; 
+                background: #E5E0FF; 
+                border: 2px solid #E5E0FF; 
+                border-bottom: 2px solid #E5E0FF; 
                 border-top-left-radius: 10px; 
                 border-top-right-radius: 10px; 
                 min-width: 100px; 
                 padding: 10px; 
                 margin-right: 2px; 
                 font-weight: bold; 
-                color: white;
+                color: #4B3FBC;
+            }
+                                
+            QTabBar::tab:hover {
+                background: #FCE7F3;
             }
             
             QTabBar::tab:selected { 
-                background: #fefdfa; 
-                border: 2px solid #ffccd5; 
-                border-bottom: 2px solid white; 
-                color: #9b8ea9;
+                background: #6C5CE7; 
+                border: 2px solid #6C5CE7; 
+                border-bottom: 2px solid #FAFAFF; 
+                color: white;
                 margin-bottom: -2px;       
             }
         """)
@@ -83,15 +87,15 @@ class MainWindow(QWidget):
         self.btn_upload_img.setCursor(Qt.PointingHandCursor)
         self.btn_upload_img.setStyleSheet("""
             QPushButton { 
-                background-color: #9b8ea9; 
-                color: white;              
+                background-color: #FF6B9A; 
+                color: white; 
                 border-radius: 20px; 
                 font-weight: bold; 
                 font-size: 12px;
-                border: 2px solid #7a6b88;
+                border: none;
             }
             QPushButton:hover { 
-                background-color: #7a6b88; 
+                background-color: #E05584; 
             }
         """)
         self.btn_upload_img.clicked.connect(self.upload_image)
@@ -113,15 +117,15 @@ class MainWindow(QWidget):
         self.btn_upload_vid.setCursor(Qt.PointingHandCursor)
         self.btn_upload_vid.setStyleSheet("""
             QPushButton { 
-                background-color: #9b8ea9; 
+                background-color: #FF6B9A; 
                 color: white; 
                 border-radius: 20px; 
                 font-weight: bold; 
                 font-size: 12px;
-                border: 2px solid #7a6b88; 
+                border: none;
             }
             QPushButton:hover { 
-                background-color: #7a6b88; 
+                background-color: #E05584; 
             }
         """)
         self.btn_upload_vid.clicked.connect(self.upload_video)
@@ -144,9 +148,9 @@ class MainWindow(QWidget):
         self.result_card.setFixedSize(361, 524)
         self.result_card.setStyleSheet("""
             QFrame {
-                background-color: white;
+                background-color: #FFFFFF;
                 border-radius: 15px;
-                border: 2px solid #ffccd5;
+                border: 2px solid #E5E0FF;
             }
         """)
         
@@ -155,7 +159,7 @@ class MainWindow(QWidget):
         title_label.setStyleSheet("""
             font-size: 22px; 
             font-weight: bold; 
-            color: #7a6b88; 
+            color: #4B3FBC; 
             margin-top: 3px;
             background-color: transparent;
             border: none;
@@ -166,7 +170,7 @@ class MainWindow(QWidget):
         self.face_label.setFixedWidth(270)
         self.face_label.setFixedHeight(270)
         self.face_label.setStyleSheet("border: none; background: transparent;")
-        self.face_label.setBorder("#ffccd5", 2, 15)
+        self.face_label.setBorder("#E5E0FF", 2, 15)
         self.face_label.hide()
 
         self.info_label = AntialiasedLabel()
@@ -176,7 +180,7 @@ class MainWindow(QWidget):
         self.info_label.setText("")
         self.info_label.hide()
 
-        self.status_label = QLabel("WAITING...") 
+        self.status_label = QLabel("...WAITING...") 
         self.status_label.setFixedSize(140, 26)
         self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setStyleSheet("""
@@ -185,7 +189,7 @@ class MainWindow(QWidget):
                 font-weight: bold; 
                 border-radius: 13px; 
                 border: none;
-                color: #555;
+                color: #6B6B6B;
                 background-color: #fefdfa; 
             }
         """)
@@ -207,7 +211,7 @@ class MainWindow(QWidget):
         self.result_card.setLayout(right_container)
 
         right_wrapper = QVBoxLayout()
-        right_wrapper.setContentsMargins(0, 36, 0, 0) 
+        right_wrapper.setContentsMargins(0, 35, 0, 0) 
         right_wrapper.addWidget(self.result_card)
 
         # ---- TOP SECTION (Camera + Result Panel) ---- #
@@ -222,9 +226,9 @@ class MainWindow(QWidget):
         self.history_frame = QFrame()
         self.history_frame.setStyleSheet("""
             QFrame {
-                background-color: white;
+                background-color: #FFFFFF;
                 border-radius: 15px;
-                border: 2px solid #ffccd5;
+                border: 2px solid #E5E0FF;
             }
         """)
         
@@ -233,10 +237,11 @@ class MainWindow(QWidget):
         history_layout.setSpacing(10)
 
         self.log_title = QLabel("DETECTION HISTORY")
+        self.log_title.setAlignment(Qt.AlignCenter)
         self.log_title.setStyleSheet("""
             font-size: 16px; 
             font-weight: bold; 
-            color: #7a6b88; 
+            color: #4B3FBC; 
             background-color: transparent;
             border: none;
         """)
@@ -374,7 +379,7 @@ class MainWindow(QWidget):
         painter.drawPixmap(int(x_off), int(y_off), scaled_pixmap)
         
         painter.setClipping(False)
-        pen = QPen(QColor("#ffccd5")) 
+        pen = QPen(QColor("#E5E0FF")) 
         pen.setWidth(2) 
         painter.setPen(pen)
         painter.setBrush(Qt.NoBrush)
@@ -384,7 +389,7 @@ class MainWindow(QWidget):
         self.face_label.setPixmap(final_pixmap)
 
         # Info part
-        self.info_label.setBorder("#ffccd5", 2, 15)
+        self.info_label.setBorder("#E5E0FF", 2, 15)
         
         animal_class = data["class"].upper()
         animal_conf = f"{data['confidence']:.2f}"
@@ -408,33 +413,33 @@ class MainWindow(QWidget):
         info_html = f"""
         <table width='100%' cellspacing='0' cellpadding='6' 
                style='font-family: Segoe UI; border: none; text-align: center;'>
-            <tr style='background-color: #fff5f6;'>
-                <td width='50%' style='color: #4a4a4a; text-align: center; font-weight: bold; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>CLASS</td>
-                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_class}</td>
+            <tr style='background-color: #FFFFFF;'>
+                <td width='50%' style='color: #4B3FBC; text-align: center; font-weight: bold; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>CLASS</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{animal_class}</td>
             </tr>
-            <tr>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>ANIMAL CONFIDENT</td>
-                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_conf}</td>
+            <tr style='background-color: #F7F5FF;'>
+                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>ANIMAL CONFIDENT</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{animal_conf}</td>
             </tr>
-            <tr style='background-color: #fff5f6;'>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>NOSE CONFIDENT</td>
-                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{nose_conf}</td>
+            <tr style='background-color: #FFFFFF;'>
+                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>NOSE CONFIDENT</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{nose_conf}</td>
             </tr>
-            <tr>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>FACE DISTANCE</td>
-                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{face_d}</td>
+            <tr style='background-color: #F7F5FF;'>
+                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>FACE DISTANCE</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{face_d}</td>
             </tr>
-            <tr style='background-color: #fff5f6;'>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-right: 1px solid #ffccd5;'>NOSE DISTANCE</td>
-                <td width='50%' style='color: #333; text-align: center;'>{nose_d}</td>
+            <tr style='background-color: #FFFFFF;'>
+                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-right: 1px solid #E5E0FF;'>NOSE DISTANCE</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center;'>{nose_d}</td>
             </tr>
         </table>
         """
         self.info_label.setText(info_html)
 
         status_text = "KNOWN" if status else "UNKNOWN"
-        status_bg_color = "#c3e6cb" if status else "#ffccd5"
-        status_text_color = "#155724" if status else "#721c24"
+        status_bg_color = "#D1FAE5" if status else "#FFE4E6"
+        status_text_color = "#065F46" if status else "#9F1239"
 
         self.status_label.setText(f"STATUS : {status_text}")
         self.status_label.setStyleSheet(f"""
@@ -454,7 +459,7 @@ class MainWindow(QWidget):
 
     # Add Card Logs
     def add_log_card(self, img, label, timestamp):
-        card = DetectionCard(img, label, timestamp)
+        card = DetectionCard(img, label, timestamp, is_new=True)
         self.log_layout.insertWidget(0, card)
         self.log_scroll.horizontalScrollBar().setValue(0)
 
@@ -471,15 +476,21 @@ if __name__ == "__main__":
     app.setStyleSheet("""
         QScrollBar:horizontal {
             border: none;
-            background: #fefdfa;
+            background: #F7F5FF;
             height: 8px;
             margin: 0px;
         }
+                      
         QScrollBar::handle:horizontal {
-            background: #e4d8d8;
+            background: #D6CCFF;
             min-width: 20px;
             border-radius: 4px;
         }
+                      
+        QScrollBar::handle:horizontal:hover {
+            background: #F9A8D4; 
+        }
+                      
         QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
             border: none;
             background: none;
