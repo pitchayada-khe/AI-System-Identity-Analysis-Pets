@@ -8,15 +8,20 @@ class CameraWorker(QThread):
     frame_signal = pyqtSignal(object) # send frame to left side
     detection_signal = pyqtSignal(object) # send detect history to right side
 
-    def __init__(self):
+    def __init__(self, video_soruce=0):
         super().__init__()
         self.running = True
+        self.video_source = video_soruce
+
 
     def run(self):
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(self.video_source)
         while self.running:
             ret, frame = cap.read()
-            if not ret: continue
+            if not ret:
+                if isinstance(self.video_source, str):
+                    break
+                continue
 
             # ---- DETECTION ---- #
             result = detection(frame)

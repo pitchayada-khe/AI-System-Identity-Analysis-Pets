@@ -1,6 +1,6 @@
 import sys
 import cv2
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QFrame, QScrollArea
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QFrame, QScrollArea, QTabWidget, QPushButton, QFileDialog
 from PyQt5.QtGui import QImage, QPixmap, QIcon, QPainter, QPen, QColor, QBrush, QPainterPath
 from PyQt5.QtCore import Qt, QRectF
 from datetime import datetime
@@ -9,6 +9,7 @@ from widgets import AntialiasedLabel, DetectionCard
 from camera_thread import CameraWorker
 from styles import MAIN_STYLE, get_result_table_html
 from utils.identification_model import identification
+from utils.detection_model import detection
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -19,30 +20,81 @@ class MainWindow(QWidget):
 
         self.last_detection = None
 
-        # ---- LEFT: Camera View ---- #
-        self.camera_frame = QFrame()
-        self.camera_frame.setFixedSize(660, 540)
-        self.camera_frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 15px;
-                border: 2px solid #ffccd5; 
-            }
+        # ---- LEFT: Mode Tabs ---- #
+        self.tabs = QTabWidget()
+        self.tabs.setFixedSize(660, 560)
+        self.tabs.setAttribute(Qt.WA_TranslucentBackground)
+        
+        self.tabs.setStyleSheet("""
+            QTabWidget::pane { border: 2px solid #ffccd5; border-radius: 10px; background-color: transparent; } 
+            QTabBar::tab { background: #fefdfa; border: 1px solid #ffccd5; border-bottom-color: #ffccd5; border-top-left-radius: 10px; border-top-right-radius: 10px; min-width: 100px; padding: 10px; margin-right: 2px; font-weight: bold; color: #9b8ea9;}
+            QTabBar::tab:selected, QTabBar::tab:hover { background: #fff5f6; border-bottom-color: #fff5f6; color: #4a4a4a;}
         """)
 
-        self.camera_label = QLabel()
-        self.camera_label.setAlignment(Qt.AlignCenter)
-        self.camera_label.setFixedSize(640, 480)
-        self.camera_label.setStyleSheet("border: none;")
+        # Camera Tab
+        self.tab_camera = QWidget()
+        self.tab_camera.setStyleSheet("background-color: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top-right-radius: 10px;")
 
-        camera_layout = QVBoxLayout()
-        camera_layout.setContentsMargins(10, 10, 10, 10)
-        camera_layout.addWidget(self.camera_label, alignment=Qt.AlignCenter)
-        self.camera_frame.setLayout(camera_layout)
+        self.camera_label = QLabel() 
+        self.camera_label.setAlignment(Qt.AlignCenter)
+
+        cam_layout = QVBoxLayout()
+        cam_layout.addWidget(self.camera_label, alignment=Qt.AlignCenter)
+        self.tab_camera.setLayout(cam_layout)
+
+        # Image Tab
+        self.tab_image = QWidget()
+        self.tab_image.setStyleSheet("background-color: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top-right-radius: 10px;")
+
+        self.image_label = QLabel() 
+        self.image_label.setAlignment(Qt.AlignCenter)
+
+        self.btn_upload_img = QPushButton("Choose Your Image")
+        self.btn_upload_img.setFixedSize(200, 45)
+        self.btn_upload_img.setCursor(Qt.PointingHandCursor)
+        self.btn_upload_img.setStyleSheet("""
+            QPushButton { background-color: #ffccd5; color: #4a4a4a; border-radius: 20px; font-weight: bold; font-size: 14px; }
+            QPushButton:hover { background-color: #ffb3c1; }
+        """)
+        self.btn_upload_img.clicked.connect(self.upload_image)
+
+        img_layout = QVBoxLayout()
+        img_layout.addWidget(self.image_label, stretch=1, alignment=Qt.AlignCenter)
+        img_layout.addWidget(self.btn_upload_img, alignment=Qt.AlignCenter)
+        self.tab_image.setLayout(img_layout)
+
+        # Video Tab
+        self.tab_video = QWidget()
+        self.tab_video.setStyleSheet("background-color: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top-right-radius: 10px;")
+
+        self.video_label = QLabel() 
+        self.video_label.setAlignment(Qt.AlignCenter)
+
+        self.btn_upload_vid = QPushButton("Choose Your Video")
+        self.btn_upload_vid.setFixedSize(200, 45)
+        self.btn_upload_vid.setCursor(Qt.PointingHandCursor)
+        self.btn_upload_vid.setStyleSheet("""
+            QPushButton { background-color: #ffccd5; color: #4a4a4a; border-radius: 20px; font-weight: bold; font-size: 14px; }
+            QPushButton:hover { background-color: #ffb3c1; }
+        """)
+        self.btn_upload_vid.clicked.connect(self.upload_video)
+
+        vid_layout = QVBoxLayout()
+        vid_layout.addWidget(self.video_label, stretch=1, alignment=Qt.AlignCenter)
+        vid_layout.addWidget(self.btn_upload_vid, alignment=Qt.AlignCenter)
+        self.tab_video.setLayout(vid_layout)
+
+        # 3 Tabs
+        self.tabs.addTab(self.tab_camera, "Live Camera")
+        self.tabs.addTab(self.tab_image, "Image")
+        self.tabs.addTab(self.tab_video, "Video")
+
+        self.tabs.currentChanged.connect(self.on_tab_changed)
+
 
         # ---- RIGHT: Result Panel ---- #
         self.result_card = QFrame()
-        self.result_card.setFixedSize(350, 540)
+        self.result_card.setFixedSize(350, 560)
         self.result_card.setStyleSheet("""
             QFrame {
                 background-color: white;
@@ -112,7 +164,7 @@ class MainWindow(QWidget):
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(15)
 
-        top_layout.addWidget(self.camera_frame)
+        top_layout.addWidget(self.tabs)
         top_layout.addWidget(self.result_card)
 
         # ---- LOG SECTION ---- #
@@ -185,20 +237,62 @@ class MainWindow(QWidget):
         """)
 
         # ---- Start Camera Thread ---- #
-        self.worker = CameraWorker()
-        self.worker.frame_signal.connect(self.update_camera)
+        self.on_tab_changed(0)
+
+    # Update Left Panel
+    def on_tab_changed(self, index):
+        # Turn off the old input before changing the tab
+        if hasattr(self, 'worker') and self.worker.isRunning():
+            self.worker.stop()
+            
+        # Clear right panel (result)
+        # self.face_label.hide()
+        # self.info_label.hide()
+        # self.status_label.setText("WAITING...")
+        # self.status_label.setStyleSheet("QLabel { font-size: 13px; font-weight: bold; border-radius: 13px; color: #555; background-color: #fefdfa; }")
+        
+        # If return to the camera tab (reopen the camera)
+        if index == 0:
+            self.start_camera_worker(0)
+
+    def start_camera_worker(self, source):
+        self.worker = CameraWorker(source)
+        if source == 0:
+            self.worker.frame_signal.connect(lambda frame: self.display_frame(frame, self.camera_label))
+        else:
+            self.worker.frame_signal.connect(lambda frame: self.display_frame(frame, self.video_label))
         self.worker.detection_signal.connect(self.update_detection)
         self.worker.start()
 
-    # Update Left Panel (Live Camera)
-    def update_camera(self, frame):
+    def display_frame(self, frame, target_label):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = frame_rgb.shape
-        bytes_per_line = ch * w
-        qt_image = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qt_image)
-        scaled_pixmap = pixmap.scaled(640, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.camera_label.setPixmap(scaled_pixmap)
+        qt_image = QImage(frame_rgb.data, w, h, ch * w, QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(qt_image).scaled(640, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        target_label.setPixmap(pixmap)
+
+    def upload_image(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open Image", "", "Image Files (*.png *.jpg *.jpeg)")
+        if file_path:
+            frame = cv2.imread(file_path)
+            if frame is not None:
+                result = detection(frame)
+                if result is not None:
+                    self.update_detection(result)
+                    self.display_frame(result["annotated_frame"], self.image_label)
+                else:
+                    self.display_frame(frame, self.image_label)
+
+    def upload_video(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open Video", "", "Video Files (*.mp4 *.avi *.mov)")
+        if file_path:
+            # Close the old video (if any) and open the new video
+            if hasattr(self, 'worker') and self.worker.isRunning():
+                self.worker.stop()
+                self.worker.wait()
+            
+            self.video_label.clear() 
+            self.start_camera_worker(file_path)
 
     # Update Right Panel (Only When Detect)
     def update_detection(self, data):
