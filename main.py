@@ -26,14 +26,39 @@ class MainWindow(QWidget):
         self.tabs.setAttribute(Qt.WA_TranslucentBackground)
         
         self.tabs.setStyleSheet("""
-            QTabWidget::pane { border: 2px solid #ffccd5; border-radius: 10px; background-color: transparent; } 
-            QTabBar::tab { background: #fefdfa; border: 1px solid #ffccd5; border-bottom-color: #ffccd5; border-top-left-radius: 10px; border-top-right-radius: 10px; min-width: 100px; padding: 10px; margin-right: 2px; font-weight: bold; color: #9b8ea9;}
-            QTabBar::tab:selected, QTabBar::tab:hover { background: #fff5f6; border-bottom-color: #fff5f6; color: #4a4a4a;}
+            QTabWidget::pane { 
+                border: 2px solid #ffccd5; 
+                border-radius: 15px;              
+                border-top-left-radius: 0px;      
+                background-color: #fff5f6; 
+                top: -2px;                       
+            } 
+            
+            QTabBar::tab { 
+                background: #9b8ea9; 
+                border: 2px solid #7a6b88; 
+                border-bottom: 2px solid #ffccd5; 
+                border-top-left-radius: 10px; 
+                border-top-right-radius: 10px; 
+                min-width: 100px; 
+                padding: 10px; 
+                margin-right: 2px; 
+                font-weight: bold; 
+                color: white;
+            }
+            
+            QTabBar::tab:selected { 
+                background: #fefdfa; 
+                border: 2px solid #ffccd5; 
+                border-bottom: 2px solid white; 
+                color: #9b8ea9;
+                margin-bottom: -2px;       
+            }
         """)
 
         # Camera Tab
         self.tab_camera = QWidget()
-        self.tab_camera.setStyleSheet("background-color: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top-right-radius: 10px;")
+        self.tab_camera.setStyleSheet("background-color: white; border: none;")
 
         self.camera_label = QLabel() 
         self.camera_label.setAlignment(Qt.AlignCenter)
@@ -44,7 +69,7 @@ class MainWindow(QWidget):
 
         # Image Tab
         self.tab_image = QWidget()
-        self.tab_image.setStyleSheet("background-color: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top-right-radius: 10px;")
+        self.tab_image.setStyleSheet("background-color: white; border: none;")
 
         self.image_label = QLabel() 
         self.image_label.setAlignment(Qt.AlignCenter)
@@ -53,8 +78,16 @@ class MainWindow(QWidget):
         self.btn_upload_img.setFixedSize(200, 45)
         self.btn_upload_img.setCursor(Qt.PointingHandCursor)
         self.btn_upload_img.setStyleSheet("""
-            QPushButton { background-color: #ffccd5; color: #4a4a4a; border-radius: 20px; font-weight: bold; font-size: 14px; }
-            QPushButton:hover { background-color: #ffb3c1; }
+            QPushButton { 
+                background-color: #9b8ea9; 
+                color: white;              
+                border-radius: 20px; 
+                font-weight: bold; 
+                font-size: 14px; 
+            }
+            QPushButton:hover { 
+                background-color: #7a6b88; 
+            }
         """)
         self.btn_upload_img.clicked.connect(self.upload_image)
 
@@ -65,7 +98,7 @@ class MainWindow(QWidget):
 
         # Video Tab
         self.tab_video = QWidget()
-        self.tab_video.setStyleSheet("background-color: white; border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; border-top-right-radius: 10px;")
+        self.tab_video.setStyleSheet("background-color: white; border: none;")
 
         self.video_label = QLabel() 
         self.video_label.setAlignment(Qt.AlignCenter)
@@ -74,8 +107,16 @@ class MainWindow(QWidget):
         self.btn_upload_vid.setFixedSize(200, 45)
         self.btn_upload_vid.setCursor(Qt.PointingHandCursor)
         self.btn_upload_vid.setStyleSheet("""
-            QPushButton { background-color: #ffccd5; color: #4a4a4a; border-radius: 20px; font-weight: bold; font-size: 14px; }
-            QPushButton:hover { background-color: #ffb3c1; }
+            QPushButton { 
+                background-color: #9b8ea9; 
+                color: white; 
+                border-radius: 20px; 
+                font-weight: bold; 
+                font-size: 14px; 
+            }
+            QPushButton:hover { 
+                background-color: #7a6b88; 
+            }
         """)
         self.btn_upload_vid.clicked.connect(self.upload_video)
 
@@ -94,7 +135,7 @@ class MainWindow(QWidget):
 
         # ---- RIGHT: Result Panel ---- #
         self.result_card = QFrame()
-        self.result_card.setFixedSize(350, 560)
+        self.result_card.setFixedSize(361, 524)
         self.result_card.setStyleSheet("""
             QFrame {
                 background-color: white;
@@ -108,8 +149,8 @@ class MainWindow(QWidget):
         title_label.setStyleSheet("""
             font-size: 22px; 
             font-weight: bold; 
-            color: #b3a1d9; 
-            margin-top: 5px;
+            color: #7a6b88; 
+            margin-top: 3px;
             background-color: transparent;
             border: none;
         """)
@@ -149,23 +190,27 @@ class MainWindow(QWidget):
 
         right_container.addStretch(1) 
         right_container.addWidget(title_label, alignment=Qt.AlignCenter)
-        right_container.addSpacing(15) 
+        right_container.addSpacing(10) 
         right_container.addWidget(self.face_label, alignment=Qt.AlignCenter)
-        right_container.addSpacing(15) 
+        right_container.addSpacing(10) 
         right_container.addWidget(self.info_label, alignment=Qt.AlignCenter)
-        right_container.addSpacing(15) 
+        right_container.addSpacing(10) 
         right_container.addWidget(self.status_label, alignment=Qt.AlignCenter)
         right_container.addStretch(1)
         
         self.result_card.setLayout(right_container)
+
+        right_wrapper = QVBoxLayout()
+        right_wrapper.setContentsMargins(0, 36, 0, 0) 
+        right_wrapper.addWidget(self.result_card)
 
         # ---- TOP SECTION (Camera + Result Panel) ---- #
         top_layout = QHBoxLayout()
         top_layout.setContentsMargins(0, 0, 0, 0)
         top_layout.setSpacing(15)
 
-        top_layout.addWidget(self.tabs)
-        top_layout.addWidget(self.result_card)
+        top_layout.addWidget(self.tabs, stretch=2)
+        top_layout.addLayout(right_wrapper, stretch=1)
 
         # ---- LOG SECTION ---- #
         self.history_frame = QFrame()
@@ -185,7 +230,7 @@ class MainWindow(QWidget):
         self.log_title.setStyleSheet("""
             font-size: 16px; 
             font-weight: bold; 
-            color: #b3a1d9; 
+            color: #7a6b88; 
             background-color: transparent;
             border: none;
         """)
@@ -244,12 +289,6 @@ class MainWindow(QWidget):
         # Turn off the old input before changing the tab
         if hasattr(self, 'worker') and self.worker.isRunning():
             self.worker.stop()
-            
-        # Clear right panel (result)
-        # self.face_label.hide()
-        # self.info_label.hide()
-        # self.status_label.setText("WAITING...")
-        # self.status_label.setStyleSheet("QLabel { font-size: 13px; font-weight: bold; border-radius: 13px; color: #555; background-color: #fefdfa; }")
         
         # If return to the camera tab (reopen the camera)
         if index == 0:
