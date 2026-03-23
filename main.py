@@ -78,7 +78,7 @@ class MainWindow(QWidget):
         self.image_label = QLabel() 
         self.image_label.setAlignment(Qt.AlignCenter)
 
-        self.btn_upload_img = QPushButton("Choose Your Image")
+        self.btn_upload_img = QPushButton("CHOOSE YOUR IMAGE")
         self.btn_upload_img.setFixedSize(160, 40)
         self.btn_upload_img.setCursor(Qt.PointingHandCursor)
         self.btn_upload_img.setStyleSheet("""
@@ -108,7 +108,7 @@ class MainWindow(QWidget):
         self.video_label = QLabel() 
         self.video_label.setAlignment(Qt.AlignCenter)
 
-        self.btn_upload_vid = QPushButton("Choose Your Video")
+        self.btn_upload_vid = QPushButton("CHOOSE YOUR VIDEO")
         self.btn_upload_vid.setFixedSize(160, 40)
         self.btn_upload_vid.setCursor(Qt.PointingHandCursor)
         self.btn_upload_vid.setStyleSheet("""
@@ -132,9 +132,9 @@ class MainWindow(QWidget):
         self.tab_video.setLayout(vid_layout)
 
         # 3 Tabs
-        self.tabs.addTab(self.tab_camera, "Live Camera")
-        self.tabs.addTab(self.tab_image, "Image")
-        self.tabs.addTab(self.tab_video, "Video")
+        self.tabs.addTab(self.tab_camera, "LIVE CAMERA")
+        self.tabs.addTab(self.tab_image, "IMAGE")
+        self.tabs.addTab(self.tab_video, "VIDEO")
 
         self.tabs.currentChanged.connect(self.on_tab_changed)
 
@@ -150,7 +150,7 @@ class MainWindow(QWidget):
             }
         """)
         
-        title_label = QLabel("Result 🐈‍⬛")
+        title_label = QLabel("RESULT")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setStyleSheet("""
             font-size: 22px; 
@@ -232,7 +232,7 @@ class MainWindow(QWidget):
         history_layout.setContentsMargins(15, 15, 15, 15)
         history_layout.setSpacing(10)
 
-        self.log_title = QLabel("Detection History 🐾")
+        self.log_title = QLabel("DETECTION HISTORY")
         self.log_title.setStyleSheet("""
             font-size: 16px; 
             font-weight: bold; 
@@ -409,23 +409,23 @@ class MainWindow(QWidget):
         <table width='100%' cellspacing='0' cellpadding='6' 
                style='font-family: Segoe UI; border: none; text-align: center;'>
             <tr style='background-color: #fff5f6;'>
-                <td width='50%' style='color: #4a4a4a; text-align: center; font-weight: bold; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Class</td>
+                <td width='50%' style='color: #4a4a4a; text-align: center; font-weight: bold; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>CLASS</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_class}</td>
             </tr>
             <tr>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Animal Conf</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>ANIMAL CONFIDENT</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_conf}</td>
             </tr>
             <tr style='background-color: #fff5f6;'>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Nose Conf</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>NOSE CONFIDENT</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{nose_conf}</td>
             </tr>
             <tr>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Face Dist</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>FACE DISTANCE</td>
                 <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{face_d}</td>
             </tr>
             <tr style='background-color: #fff5f6;'>
-                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-right: 1px solid #ffccd5;'>Nose Dist</td>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-right: 1px solid #ffccd5;'>NOSE DISTANCE</td>
                 <td width='50%' style='color: #333; text-align: center;'>{nose_d}</td>
             </tr>
         </table>
@@ -436,7 +436,7 @@ class MainWindow(QWidget):
         status_bg_color = "#c3e6cb" if status else "#ffccd5"
         status_text_color = "#155724" if status else "#721c24"
 
-        self.status_label.setText(f"Status : {status_text}")
+        self.status_label.setText(f"STATUS : {status_text}")
         self.status_label.setStyleSheet(f"""
             QLabel {{
                 font-size: 13px; 
