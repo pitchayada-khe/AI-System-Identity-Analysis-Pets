@@ -17,7 +17,7 @@ from utils.identification_model import identification
 # ---- CAMERA WORKER THREAD ---- #
 class CameraWorker(QThread):
     frame_signal = pyqtSignal(object)       # send frame to left side
-    detection_signal = pyqtSignal(objects)   # send detect history to right side
+    detection_signal = pyqtSignal(object)   # send detect history to right side
 
     def __init__(self):
         super().__init__()

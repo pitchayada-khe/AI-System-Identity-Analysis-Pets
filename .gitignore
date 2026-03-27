@@ -1,0 +1,11 @@
+# Models
+models/iden/
+models/yolo/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# VSCode
+.vscode/

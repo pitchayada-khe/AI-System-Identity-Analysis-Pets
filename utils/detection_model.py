@@ -6,8 +6,8 @@ from datetime import datetime
 from huggingface_hub import hf_hub_download
 
 # ---- YOLO FINE-TUNED MODEL ---- #
-hf_hub_download(repo_id="Muyumq/Dog-Cat_Identification", filename="yolov11_best.pt", local_dir="models/yolo")
-detection_model = YOLO('models/yolo/yolov11_best.pt')
+hf_hub_download(repo_id="Muyumq/Dog-Cat_Identification", filename="yolo_best.pt", local_dir="models/yolo")
+detection_model = YOLO('models/yolo/yolo_best.pt')
 
 # ---- BOUNDING BOX COLORS ---- #
 CLASS_COLORS = {
