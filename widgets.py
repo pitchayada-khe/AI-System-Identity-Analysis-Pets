@@ -50,9 +50,6 @@ class DetectionCard(QFrame):
                 border-radius: 12px;
                 border: 2px solid #FFD6E0;
             }
-            #LogCard:hover {
-                border: 2px solid #FF6B9A;
-            }
         """)
 
         layout = QVBoxLayout()
