@@ -6,16 +6,27 @@ from datetime import datetime
 from huggingface_hub import hf_hub_download
 
 # ---- YOLO FINE-TUNED MODEL ---- #
-hf_hub_download(repo_id="Muyumq/Dog-Cat_Identification", filename="yolov11_best.pt", local_dir="models/yolo")
-detection_model = YOLO('models/yolo/yolov11_best.pt')
+hf_hub_download(repo_id="Muyumq/Dog-Cat_Identification", filename="yolo_best.pt", local_dir="models/yolo")
+detection_model = YOLO('models/yolo/yolo_best.pt')
+
+# ---- BOUNDING BOX COLORS ---- #
+CLASS_COLORS = {
+    'dog': (204, 153, 255),   
+    'cat': (255, 153, 204),    
+    'nose': (170, 205, 102)
+}
+DEFAULT_COLOR = (250, 206, 135)
 
 # ---- PROCESS ---- #
 def detection(frame, resize_dim=(224,224)):
 
     # For displaying in GUI (annotated)
     image = frame.copy()
-    # For cropping (clean, no drawn rectangles)
     clean_frame = frame.copy()
+    img_h, img_w = image.shape[:2]
+    scale = max(img_w / 640.0, img_h / 480.0)
+    dynamic_thickness = max(1, int(2 * scale))
+    font_scale = max(0.4, 0.6 * scale)
 
     # DETECT ANIMAL #
     results_animal = detection_model(image)
@@ -43,7 +54,9 @@ def detection(frame, resize_dim=(224,224)):
     x1, y1, x2, y2 = best_box
     
     # Draw on 'image' for GUI
-    cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    animal_color = CLASS_COLORS.get(best_animal, DEFAULT_COLOR) 
+    cv2.rectangle(image, (x1, y1), (x2, y2), animal_color, dynamic_thickness)
+    cv2.putText(image, best_animal.upper(), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, font_scale, animal_color, dynamic_thickness)
     
     # Crop from clean frame
     face_clean = clean_frame[y1:y2, x1:x2]
@@ -85,7 +98,8 @@ def detection(frame, resize_dim=(224,224)):
                 # Draw on the GUI image (need to offset by face coordinates x1, y1)
                 global_nx1, global_ny1 = x1 + nx1, y1 + ny1
                 global_nx2, global_ny2 = x1 + nx2, y1 + ny2
-                cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), (255, 0, 0), 2)
+                nose_color = CLASS_COLORS.get("nose", DEFAULT_COLOR)
+                cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), nose_color, dynamic_thickness)
                 
                 # Crop clean nose
                 nose_clean = face_clean[ny1:ny2, nx1:nx2]

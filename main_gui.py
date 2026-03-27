@@ -3,10 +3,12 @@ import cv2
 import time
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel,
-    QHBoxLayout, QVBoxLayout
+    QHBoxLayout, QVBoxLayout, QFrame
 )
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtGui import QImage, QPixmap, QIcon, QPainter, QPen, QColor, QBrush
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QRectF
+from PyQt5.QtWidgets import QScrollArea
+from datetime import datetime
 
 from utils.detection_model import detection
 from utils.identification_model import identification
@@ -49,67 +51,278 @@ class CameraWorker(QThread):
         self.quit()
         self.wait()
 
+# ---- CARD WIDGET LOGS ---- #
+class DetectionCard(QFrame):
+    def __init__(self, image, label, timestamp):
+        super().__init__()
+
+        self.setFixedSize(140, 160)
+        self.setObjectName("LogCard") 
+        self.setStyleSheet("""
+            #LogCard {
+                background-color: white;
+                border-radius: 12px; 
+                border: 2px solid #ffccd5; 
+            }
+            #LogCard:hover {
+                border: 2px solid #b3a1d9; 
+            }
+        """)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(6)
+
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb.shape
+        qt_img = QImage(rgb.data, w, h, ch * w, QImage.Format_RGB888)
+        pixmap = QPixmap.fromImage(qt_img)
+
+        img_label = QLabel()
+        scaled_pixmap = pixmap.scaled(120, 95, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        img_label.setPixmap(scaled_pixmap)
+        img_label.setAlignment(Qt.AlignCenter)
+        img_label.setStyleSheet("border: none; background: transparent;")
+
+        self.class_label = QLabel(f"Class : {label.upper()}")
+        self.class_label.setAlignment(Qt.AlignCenter)
+        self.class_label.setStyleSheet("""
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+            border: none;
+            background: transparent;
+        """)
+
+        self.time_label = QLabel(f"Time : {timestamp}")
+        self.time_label.setAlignment(Qt.AlignCenter)
+        self.time_label.setStyleSheet("""
+            font-size: 10px;
+            color: #555;
+            border: none;
+            background: transparent;
+        """)
+
+        layout.addWidget(img_label, alignment=Qt.AlignCenter)
+        layout.addWidget(self.class_label)
+        layout.addWidget(self.time_label)
+
+        self.setLayout(layout)
+
+# ---- DECORATE ---- #
+class AntialiasedLabel(QLabel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ตั้งค่าเริ่มต้น
+        self._border_color = QColor("#ffccd5") 
+        self._border_width = 2
+        self._corner_radius = 15
+        self._bg_color = Qt.transparent
+
+    def setBorder(self, color_str, width, radius):
+        self._border_color = QColor(color_str)
+        self._border_width = width
+        self._corner_radius = radius
+        self.update() 
+
+    def setBackgroundColor(self, color_str):
+        self._bg_color = QColor(color_str)
+        self.update()
+
+    def paintEvent(self, event):
+        super().paintEvent(event)
+        if self._border_color == QColor("transparent") or self._border_width == 0:
+            return
+        
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        pen = QPen(self._border_color)
+        pen.setWidth(self._border_width)
+        pen.setJoinStyle(Qt.RoundJoin)
+        painter.setPen(pen)
+
+        painter.setBrush(QBrush(self._bg_color))
+
+        rect = QRectF(self.rect())
+        offset = self._border_width / 2.0
+        rect.adjust(offset, offset, -offset, -offset)
+
+        painter.drawRoundedRect(rect, self._corner_radius, self._corner_radius)
+
 
 # ---- MAIN GUI ---- #
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Animal Detection System")
-        self.setGeometry(100, 100, 1000, 500)
+        self.setWindowIcon(QIcon("paw.png"))
+        self.setFixedSize(1045, 840)
 
         self.last_detection = None
 
         # ---- LEFT: Camera View ---- #
+        self.camera_frame = QFrame()
+        self.camera_frame.setFixedSize(660, 540)
+        self.camera_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 15px;
+                border: 2px solid #ffccd5; 
+            }
+        """)
+
         self.camera_label = QLabel()
         self.camera_label.setAlignment(Qt.AlignCenter)
         self.camera_label.setFixedSize(640, 480)
+        self.camera_label.setStyleSheet("border: none;")
 
-        # ---- RIGHT: Cropped Face ---- #
-        self.face_label = QLabel()
-        self.face_label.setAlignment(Qt.AlignCenter)
-        self.face_label.setFixedSize(300, 300)
-        self.face_label.setStyleSheet("""
-            border: 2px solid #cccccc;
-            border-radius: 10px;
-            background-color: white;
+        camera_layout = QVBoxLayout()
+        camera_layout.setContentsMargins(10, 10, 10, 10)
+        camera_layout.addWidget(self.camera_label, alignment=Qt.AlignCenter)
+        self.camera_frame.setLayout(camera_layout)
+
+        # ---- RIGHT: Result Panel ---- #
+        self.result_card = QFrame()
+        self.result_card.setFixedSize(350, 540)
+        self.result_card.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 15px;
+                border: 2px solid #ffccd5;
+            }
         """)
-
-        self.info_label = QLabel("Waiting for detection...")
-        self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("""
-            font-size: 16px;
-            font-weight: bold;
-        """)
-
-        # Container
-        title_label = QLabel("Result")
+        
+        title_label = QLabel("Result 🐈‍⬛")
         title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold;")
+        title_label.setStyleSheet("""
+            font-size: 22px; 
+            font-weight: bold; 
+            color: #b3a1d9; 
+            margin-top: 5px;
+            background-color: transparent;
+            border: none;
+        """)
+
+        self.face_label = AntialiasedLabel()
+        self.face_label.setAlignment(Qt.AlignCenter)
+        self.face_label.setFixedWidth(270)
+        self.face_label.setFixedHeight(270)
+        self.face_label.setStyleSheet("border: none; background: transparent;")
+        self.face_label.setBorder("#ffccd5", 2, 15)
+        self.face_label.hide()
+
+        self.info_label = AntialiasedLabel()
+        self.info_label.setFixedWidth(270)
+        self.info_label.setAlignment(Qt.AlignCenter)
+        self.info_label.setBorder("transparent", 0, 15)
+        self.info_label.setText("")
+        self.info_label.hide()
+
+        self.status_label = QLabel("WAITING...") 
+        self.status_label.setFixedSize(140, 26)
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("""
+            QLabel {
+                font-size: 13px; 
+                font-weight: bold; 
+                border-radius: 13px; 
+                border: none;
+                color: #555;
+                background-color: #fefdfa; 
+            }
+        """)
 
         right_container = QVBoxLayout()
-        right_container.addStretch()
-        right_container.addWidget(title_label)
-        right_container.addSpacing(20)
+        right_container.setContentsMargins(15, 0, 15, 0)
+        right_container.setSpacing(0)
+
+        right_container.addStretch(1) 
+        right_container.addWidget(title_label, alignment=Qt.AlignCenter)
+        right_container.addSpacing(15) 
         right_container.addWidget(self.face_label, alignment=Qt.AlignCenter)
-        right_container.addSpacing(15)
+        right_container.addSpacing(15) 
         right_container.addWidget(self.info_label, alignment=Qt.AlignCenter)
-        right_container.addStretch()
+        right_container.addSpacing(15) 
+        right_container.addWidget(self.status_label, alignment=Qt.AlignCenter)
+        right_container.addStretch(1)
+        
+        self.result_card.setLayout(right_container)
 
-        right_widget = QWidget()
-        right_widget.setLayout(right_container)
-        right_widget.setFixedWidth(350)
+        # ---- TOP SECTION (Camera + Result Panel) ---- #
+        top_layout = QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.setSpacing(15)
 
-        # main layout
-        main_layout = QHBoxLayout()
-        main_layout.addWidget(self.camera_label)
-        main_layout.addWidget(right_widget)
+        top_layout.addWidget(self.camera_frame)
+        top_layout.addWidget(self.result_card)
+
+        # ---- LOG SECTION ---- #
+        self.history_frame = QFrame()
+        self.history_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border-radius: 15px;
+                border: 2px solid #ffccd5;
+            }
+        """)
+        
+        history_layout = QVBoxLayout()
+        history_layout.setContentsMargins(15, 15, 15, 15)
+        history_layout.setSpacing(10)
+
+        self.log_title = QLabel("Detection History 🐾")
+        self.log_title.setStyleSheet("""
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #b3a1d9; 
+            background-color: transparent;
+            border: none;
+        """)
+
+        self.log_scroll = QScrollArea()
+        self.log_scroll.setFixedHeight(190)
+        self.log_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.log_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.log_scroll.setWidgetResizable(True)
+        self.log_scroll.setStyleSheet("""
+            QScrollArea {
+                border: none;
+                background-color: transparent;
+            }
+        """)
+
+        self.log_container = QWidget()
+        self.log_container.setStyleSheet("background-color: transparent;")
+
+        self.log_layout = QHBoxLayout()
+        self.log_layout.setContentsMargins(5, 5, 5, 10) 
+        self.log_layout.setSpacing(15)
+        self.log_layout.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        self.log_layout.addStretch()
+
+        self.log_container.setLayout(self.log_layout)
+        self.log_scroll.setWidget(self.log_container)
+
+        history_layout.addWidget(self.log_title)
+        history_layout.addWidget(self.log_scroll)
+        self.history_frame.setLayout(history_layout)
+
+        # ---- MAIN LAYOUT ---- #
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(10, 10, 10, 10)
+        main_layout.setSpacing(15)
+
+        main_layout.addLayout(top_layout)
+        main_layout.addWidget(self.history_frame)
 
         self.setLayout(main_layout)
 
-        # style
+        self.setLayout(main_layout)
         self.setStyleSheet("""
             QWidget {
-                background-color: #f4f6f9;
+                font-family: 'Segoe UI', Arial, sans-serif;
+                background-color: #fefdfa;
             }
         """)
 
@@ -126,48 +339,127 @@ class MainWindow(QWidget):
         bytes_per_line = ch * w
         qt_image = QImage(frame_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_image)
-        self.camera_label.setPixmap(pixmap)
+        scaled_pixmap = pixmap.scaled(640, 480, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.camera_label.setPixmap(scaled_pixmap)
 
     # Update Right Panel (Only When Detect)
     def update_detection(self, data):
         self.last_detection = data
+        self.face_label.show()
+        self.info_label.show()
 
+        # Image part
         face_img = data["image"]
         face_rgb = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
         h, w, ch = face_rgb.shape
         bytes_per_line = ch * w
         qt_image = QImage(face_rgb.data, w, h, bytes_per_line, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_image)
-        self.face_label.setPixmap(pixmap)
 
-        animal_class = data["class"]
-        animal_conf = data["confidence"]
+        display_size = 266
+        scaled_pixmap = pixmap.scaled(display_size, display_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        
+        final_pixmap = QPixmap(270, 270)
+        final_pixmap.fill(Qt.transparent)
 
-        nose_conf = data["nose_data"]["confidence"]
+        painter = QPainter(final_pixmap)
+        painter.setRenderHint(QPainter.Antialiasing) 
+        rect = QRectF(0, 0, 270, 270)
+        border_radius = 15
+
+        x_off = (270 - scaled_pixmap.width()) / 2
+        y_off = (270 - scaled_pixmap.height()) / 2
+
+        from PyQt5.QtGui import QPainterPath
+        path = QPainterPath()
+        path.addRoundedRect(rect, border_radius, border_radius)
+        painter.setClipPath(path)
+        painter.drawPixmap(int(x_off), int(y_off), scaled_pixmap)
+        
+        painter.setClipping(False)
+        pen = QPen(QColor("#ffccd5")) 
+        pen.setWidth(2) 
+        painter.setPen(pen)
+        painter.setBrush(Qt.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(1,1,-1,-1), border_radius, border_radius) 
+        painter.end()
+
+        self.face_label.setPixmap(final_pixmap)
+
+        # Info part
+        self.info_label.setBorder("#ffccd5", 2, 15)
+        
+        animal_class = data["class"].upper()
+        animal_conf = f"{data['confidence']:.2f}"
+        nose_conf = f"{data['nose_data']['confidence']:.2f}"
 
         result = identification(data)
-        
+
         if type(result) is tuple and len(result) == 3:
             status, face_dist, nose_dist = result
             if nose_dist == -1.0:
-                dist_info = "Distances: First Animal"
+                face_d = "FIRST DETECT"
+                nose_d = "FIRST DETECT"
             else:
-                dist_info = f"Face Dist: {face_dist:.2f} | Nose Dist: {nose_dist:.2f}"
+                face_d = f"{face_dist:.2f}"
+                nose_d = f"{nose_dist:.2f}"
         else:
             status = result
-            dist_info = "Distances: N/A"
+            face_d = "N/A"
+            nose_d = "N/A"
 
-        status_text = "KNOWN" if status else "NEW"
+        info_html = f"""
+        <table width='100%' cellspacing='0' cellpadding='6' 
+               style='font-family: Segoe UI; border: none; text-align: center;'>
+            <tr style='background-color: #fff5f6;'>
+                <td width='50%' style='color: #4a4a4a; text-align: center; font-weight: bold; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Class</td>
+                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_class}</td>
+            </tr>
+            <tr>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Animal Conf</td>
+                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{animal_conf}</td>
+            </tr>
+            <tr style='background-color: #fff5f6;'>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Nose Conf</td>
+                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{nose_conf}</td>
+            </tr>
+            <tr>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-bottom: 1px solid #ffccd5; border-right: 1px solid #ffccd5;'>Face Dist</td>
+                <td width='50%' style='color: #333; text-align: center; border-bottom: 1px solid #ffccd5;'>{face_d}</td>
+            </tr>
+            <tr style='background-color: #fff5f6;'>
+                <td style='color: #4a4a4a; font-weight: bold; text-align: center; border-right: 1px solid #ffccd5;'>Nose Dist</td>
+                <td width='50%' style='color: #333; text-align: center;'>{nose_d}</td>
+            </tr>
+        </table>
+        """
+        self.info_label.setText(info_html)
 
-        info_text = (
-            f"Class: {animal_class.upper()}\n"
-            f"Animal Conf: {animal_conf:.2f}\n"
-            f"Nose Conf: {nose_conf:.2f}\n"
-            f"{dist_info}\n"
-            f"Status: {status_text}"
-        )
+        status_text = "KNOWN" if status else "UNKNOWN"
+        status_bg_color = "#c3e6cb" if status else "#ffccd5"
+        status_text_color = "#155724" if status else "#721c24"
 
-        self.info_label.setText(info_text)
+        self.status_label.setText(f"Status : {status_text}")
+        self.status_label.setStyleSheet(f"""
+            QLabel {{
+                font-size: 13px; 
+                font-weight: bold; 
+                border-radius: 13px; 
+                border: none;
+                color: {status_text_color};
+                background-color: {status_bg_color}; 
+            }}
+        """)
+
+        if not status:
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            self.add_log_card(face_img, animal_class, timestamp)
+
+    # Add Card Logs
+    def add_log_card(self, img, label, timestamp):
+        card = DetectionCard(img, label, timestamp)
+        self.log_layout.insertWidget(0, card)
+        self.log_scroll.horizontalScrollBar().setValue(0)
 
     # Close Event
     def closeEvent(self, event):
@@ -178,6 +470,25 @@ class MainWindow(QWidget):
 # ---- RUN APP ---- #
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    app.setStyleSheet("""
+        QScrollBar:horizontal {
+            border: none;
+            background: #fefdfa;
+            height: 8px;
+            margin: 0px;
+        }
+        QScrollBar::handle:horizontal {
+            background: #e4d8d8;
+            min-width: 20px;
+            border-radius: 4px;
+        }
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            border: none;
+            background: none;
+        }
+    """)
+
     window = MainWindow()
     window.show()
     sys.exit(app.exec_())
