@@ -99,9 +99,6 @@ class DetectionCard(QFrame):
                 border-radius: 12px;
                 border: 2px solid #FF6B9A;
             }
-            #LogCard:hover {
-                border: 2px solid #6C5CE7;
-            }
         """)
 
         shadow = QGraphicsDropShadowEffect(self)
@@ -119,8 +116,5 @@ class DetectionCard(QFrame):
                 background-color: #FFF1F5;
                 border-radius: 12px;
                 border: 2px solid #FFD6E0;
-            }
-            #LogCard:hover {
-                border: 2px solid #FF6B9A;
             }
         """)
