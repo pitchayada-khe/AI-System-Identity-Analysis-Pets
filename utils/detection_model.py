@@ -16,6 +16,7 @@ CLASS_COLORS = {
     'nose': (170, 205, 102)
 }
 DEFAULT_COLOR = (250, 206, 135)
+CONF_THRESHOLD = 0.7
 
 # ---- PROCESS ---- #
 def detection(frame, resize_dim=(224,224)):
@@ -43,6 +44,9 @@ def detection(frame, resize_dim=(224,224)):
                 continue
 
             animal_conf = float(box.conf[0])
+            if animal_conf < CONF_THRESHOLD:
+                continue
+
             if animal_conf > best_conf:
                 best_conf = animal_conf
                 best_animal = class_name
@@ -55,9 +59,15 @@ def detection(frame, resize_dim=(224,224)):
     
     # Draw on 'image' for GUI
     animal_color = CLASS_COLORS.get(best_animal, DEFAULT_COLOR) 
+    # cv2.rectangle(image, (x1, y1), (x2, y2), animal_color, dynamic_thickness)
+    # cv2.putText(image, best_animal.upper(), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, font_scale, animal_color, dynamic_thickness)
+    label = f"{best_animal.upper()}"
+    (text_w, text_h), baseline = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, dynamic_thickness)
+    cv2.rectangle(image, (x1, y1), (x1 + text_w + 6, y1 + text_h + 6), animal_color, -1)
+    cv2.putText(image, label, (x1 + 3, y1 + text_h + 2), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (255, 255, 255), dynamic_thickness)
     cv2.rectangle(image, (x1, y1), (x2, y2), animal_color, dynamic_thickness)
-    cv2.putText(image, best_animal.upper(), (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, font_scale, animal_color, dynamic_thickness)
-    
+
+
     # Crop from clean frame
     face_clean = clean_frame[y1:y2, x1:x2]
     # Crop from annotated frame to search for nose in (though clean could also be used, clean is safer)
