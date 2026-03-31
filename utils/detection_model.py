@@ -1,5 +1,7 @@
 from ultralytics import YOLO
 import cv2
+import math
+import numpy as np
 from pathlib import Path
 from datetime import datetime
 
@@ -76,6 +78,53 @@ def detection(frame, resize_dim=(224,224)):
     if face_clean.size == 0 or face_for_nose_search.size == 0:
         return None
 
+    # DETECT NOSE FROM CLEAN FACE REGION (FIRST PASS: For Tilt and GUI) #
+    results_nose = detection_model(face_for_nose_search)
+    best_nose_box_first = None
+    best_nose_conf_first = -1
+
+    for nose_result in results_nose:
+        for nose_box in nose_result.boxes:
+            class_id = int(nose_box.cls[0])
+            class_name = detection_model.names[class_id]
+
+            if class_name != "nose":
+                continue
+
+            nose_conf = float(nose_box.conf[0])
+            if nose_conf > best_nose_conf_first:
+                best_nose_conf_first = nose_conf
+                best_nose_box_first = list(map(int, nose_box.xyxy[0]))
+
+    if best_nose_box_first is None:
+        return None
+
+    # Draw nose on GUI (original unrotated)
+    nx1_f, ny1_f, nx2_f, ny2_f = best_nose_box_first
+    global_nx1, global_ny1 = x1 + nx1_f, y1 + ny1_f
+    global_nx2, global_ny2 = x1 + nx2_f, y1 + ny2_f
+    nose_color = CLASS_COLORS.get("nose", DEFAULT_COLOR)
+    cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), nose_color, dynamic_thickness)
+
+    # Calculate deskew angle
+    global_cx = (x1 + x2) / 2.0
+    global_cy = (y1 + y2) / 2.0
+    global_nx_center = (global_nx1 + global_nx2) / 2.0
+    global_ny_center = (global_ny1 + global_ny2) / 2.0
+
+    dx = global_nx_center - global_cx
+    dy = global_ny_center - global_cy
+    angle = math.degrees(math.atan2(dy, dx)) - 90.0
+
+    # Deskew (rotate) the clean frame if tilted
+    if abs(angle) > 2.0:
+        M = cv2.getRotationMatrix2D((global_cx, global_cy), angle, 1.0)
+        rotated_clean = cv2.warpAffine(clean_frame, M, (img_w, img_h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+        face_clean = rotated_clean[y1:y2, x1:x2]
+    
+    if face_clean.size == 0:
+        return None
+
     face_region = cv2.resize(face_clean, resize_dim, interpolation=cv2.INTER_CUBIC)
 
     detection_data = {
@@ -86,12 +135,12 @@ def detection(frame, resize_dim=(224,224)):
         "nose_data": None
     }
 
-    # DETECT NOSE FROM CLEAN FACE REGION #
-    results_nose = detection_model(face_for_nose_search)
+    # DETECT NOSE FROM ALIGNED FACE REGION (SECOND PASS: For Identification) #
+    results_nose_aligned = detection_model(face_clean)
     best_nose = None
     best_nose_conf = -1
 
-    for nose_result in results_nose:
+    for nose_result in results_nose_aligned:
         for nose_box in nose_result.boxes:
             class_id = int(nose_box.cls[0])
             class_name = detection_model.names[class_id]
@@ -104,14 +153,7 @@ def detection(frame, resize_dim=(224,224)):
                 best_nose_conf = nose_conf
                 nx1, ny1, nx2, ny2 = map(int, nose_box.xyxy[0])
                 
-                # The nose coordinates are relative to the face crop
-                # Draw on the GUI image (need to offset by face coordinates x1, y1)
-                global_nx1, global_ny1 = x1 + nx1, y1 + ny1
-                global_nx2, global_ny2 = x1 + nx2, y1 + ny2
-                nose_color = CLASS_COLORS.get("nose", DEFAULT_COLOR)
-                cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), nose_color, dynamic_thickness)
-                
-                # Crop clean nose
+                # Crop clean nose from straight face
                 nose_clean = face_clean[ny1:ny2, nx1:nx2]
                 if nose_clean.size == 0:
                     continue
