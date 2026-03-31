@@ -425,14 +425,6 @@ class MainWindow(QWidget):
                 <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>NOSE CONFIDENT</td>
                 <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{nose_conf}</td>
             </tr>
-            <tr style='background-color: #F7F5FF;'>
-                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>FACE DISTANCE</td>
-                <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{face_d}</td>
-            </tr>
-            <tr style='background-color: #FFFFFF;'>
-                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-right: 1px solid #E5E0FF;'>NOSE DISTANCE</td>
-                <td width='50%' style='color: #2D2D2D; text-align: center;'>{nose_d}</td>
-            </tr>
         </table>
         """
         self.info_label.setText(info_html)
