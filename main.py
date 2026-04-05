@@ -2,13 +2,13 @@ import sys
 import cv2
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QHBoxLayout, QVBoxLayout, QFrame, QScrollArea, QTabWidget, QPushButton, QFileDialog
 from PyQt5.QtGui import QImage, QPixmap, QIcon, QPainter, QPen, QColor, QBrush, QPainterPath
-from PyQt5.QtCore import Qt, QRectF
+from PyQt5.QtCore import Qt, QRectF, QTimer
 from datetime import datetime
 
 from widgets import AntialiasedLabel, DetectionCard
 from camera_thread import CameraWorker
 from styles import MAIN_STYLE, get_result_table_html
-from utils.identification_model import identification
+from utils.identification_model import identification, clear_known_database
 from utils.detection_model import detection
 
 class MainWindow(QWidget):
@@ -295,6 +295,32 @@ class MainWindow(QWidget):
         # ---- Start Camera Thread ---- #
         self.on_tab_changed(0)
 
+        # ---- Auto Clear History Timer ---- #
+        self.clear_timer = QTimer(self)
+        self.clear_timer.timeout.connect(self.clear_history_data)
+        # Check every 10 minutes (600,000 ms)
+        self.clear_timer.start(600000) 
+
+    def clear_history_data(self):
+        """Clear both the UI logs and the memory database for items older than threshold."""
+        import time
+        max_age_seconds = 10800 # 3 hours
+        
+        # 1. Clear UI history
+        # Iterate backwards to safely remove items without messing up indices
+        layout = self.log_layout
+        for i in reversed(range(layout.count())):
+            item = layout.itemAt(i)
+            widget = item.widget()
+            if widget and hasattr(widget, 'created_at'):
+                if time.time() - widget.created_at > max_age_seconds:
+                    # Remove it from layout and delete
+                    layout.takeAt(i)
+                    widget.deleteLater()
+                
+        # 2. Clear known database in backend
+        clear_known_database(max_age_seconds)
+
     # Update Left Panel
     def on_tab_changed(self, index):
         # Turn off the old input before changing the tab
@@ -424,6 +450,14 @@ class MainWindow(QWidget):
             <tr style='background-color: #FFFFFF;'>
                 <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>NOSE CONFIDENT</td>
                 <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{nose_conf}</td>
+            </tr>
+            <tr style='background-color: #F7F5FF;'>
+                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-bottom: 1px solid #E5E0FF; border-right: 1px solid #E5E0FF;'>FACE DISTANCE</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center; border-bottom: 1px solid #E5E0FF;'>{face_d}</td>
+            </tr>
+            <tr style='background-color: #FFFFFF;'>
+                <td style='color: #4B3FBC; font-weight: bold; text-align: center; border-right: 1px solid #E5E0FF;'>NOSE DISTANCE</td>
+                <td width='50%' style='color: #2D2D2D; text-align: center;'>{nose_d}</td>
             </tr>
         </table>
         """

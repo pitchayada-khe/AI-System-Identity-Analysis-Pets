@@ -7,6 +7,7 @@ from torchvision.transforms import InterpolationMode
 import cv2
 import numpy as np
 from huggingface_hub import hf_hub_download
+import time
 
 # ---- DEVICE CONFIGURATION ---- #
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -74,6 +75,15 @@ transform = transforms.Compose([
 #   "cat": [ {"face_emb": tensor_1x128, "nose_emb": tensor_1x128}, ... ]
 # }
 known_database = {"dog": [], "cat": []}
+
+def clear_known_database(max_age_seconds=30):
+    """Clear old entries from the database that are older than max_age_seconds."""
+    current_time = time.time()
+    for animal_class in ["dog", "cat"]:
+        known_database[animal_class] = [
+            record for record in known_database[animal_class]
+            if current_time - record.get("timestamp", current_time) <= max_age_seconds
+        ]
 
 # ---- THRESHOLDS ---- #
 # Format: (Face_Threshold, Nose_Threshold)
@@ -159,7 +169,8 @@ def identification(detection_data):
         # Save as a NEW identity
         new_identity = {
             "face_emb": current_face_emb,
-            "nose_emb": current_nose_emb
+            "nose_emb": current_nose_emb,
+            "timestamp": time.time()
         }
         known_database[animal_class].append(new_identity)
         

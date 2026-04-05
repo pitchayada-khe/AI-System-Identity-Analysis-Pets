@@ -34,10 +34,13 @@ class AntialiasedLabel(QLabel):
         rect.adjust(offset, offset, -offset, -offset)
         painter.drawRoundedRect(rect, self._corner_radius, self._corner_radius)
 
+import time
+
 # ---- CARD WIDGET LOGS ---- #
 class DetectionCard(QFrame):
     def __init__(self, image, label, timestamp, is_new=True):
         super().__init__()
+        self.created_at = time.time()
 
         self.is_new = is_new
 

@@ -8,8 +8,8 @@ from datetime import datetime
 from huggingface_hub import hf_hub_download
 
 # ---- YOLO FINE-TUNED MODEL ---- #
-hf_hub_download(repo_id="Muyumq/Dog-Cat_Identification", filename="yolo_best.pt", local_dir="models/yolo")
-detection_model = YOLO('models/yolo/yolo_best.pt')
+hf_hub_download(repo_id="Muyumq/Dog-Cat_Identification", filename="yolov11n_dog_cat_nose_best.pt", local_dir="models/yolo")
+detection_model = YOLO('models/yolo/yolov11n_dog_cat_nose_best.pt')
 
 # ---- BOUNDING BOX COLORS ---- #
 CLASS_COLORS = {
@@ -106,31 +106,31 @@ def detection(frame, resize_dim=(224,224)):
     nose_color = CLASS_COLORS.get("nose", DEFAULT_COLOR)
     cv2.rectangle(image, (global_nx1, global_ny1), (global_nx2, global_ny2), nose_color, dynamic_thickness)
 
-    # Calculate deskew angle
-    global_cx = (x1 + x2) / 2.0
-    global_cy = (y1 + y2) / 2.0
-    global_nx_center = (global_nx1 + global_nx2) / 2.0
-    global_ny_center = (global_ny1 + global_ny2) / 2.0
+    # # Calculate deskew angle
+    # global_cx = (x1 + x2) / 2.0
+    # global_cy = (y1 + y2) / 2.0
+    # global_nx_center = (global_nx1 + global_nx2) / 2.0
+    # global_ny_center = (global_ny1 + global_ny2) / 2.0
 
-    dx = global_nx_center - global_cx
-    dy = global_ny_center - global_cy
-    angle = math.degrees(math.atan2(dy, dx)) - 90.0
+    # dx = global_nx_center - global_cx
+    # dy = global_ny_center - global_cy
+    # angle = math.degrees(math.atan2(dy, dx)) - 90.0
 
-    # Deskew (rotate) the clean frame if tilted
-    if abs(angle) > 2.0:
-        M = cv2.getRotationMatrix2D((global_cx, global_cy), angle, 1.0)
-        rotated_clean = cv2.warpAffine(clean_frame, M, (img_w, img_h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-        face_clean = rotated_clean[y1:y2, x1:x2]
+    # # Deskew (rotate) the clean frame if tilted
+    # if abs(angle) > 2.0:
+    #     M = cv2.getRotationMatrix2D((global_cx, global_cy), angle, 1.0)
+    #     rotated_clean = cv2.warpAffine(clean_frame, M, (img_w, img_h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+    #     face_clean = rotated_clean[y1:y2, x1:x2]
     
-    if face_clean.size == 0:
-        return None
+    # if face_clean.size == 0:
+    #     return None
 
-    face_region = cv2.resize(face_clean, resize_dim, interpolation=cv2.INTER_CUBIC)
+    # face_region = cv2.resize(face_clean, resize_dim, interpolation=cv2.INTER_CUBIC)
 
     detection_data = {
         "class": best_animal,
         "confidence": best_conf,
-        "image": face_region,
+        "image": face_clean,
         "annotated_frame": image,
         "nose_data": None
     }
